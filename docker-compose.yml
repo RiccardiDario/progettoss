@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  node-vuln:
+    image: node:20.11.1
+    container_name: node-vuln
+    working_dir: /app
+    volumes:
+      - ./vuln:/app:delegated
+    command: ["bash", "-lc", "npm install --no-audit --no-fund 2>/dev/null || true; node server-vuln.js"]
+    ports:
+      - "3000:3000"
+    networks:
+      - labnet
+    restart: "no"
+
+  node-patched:
+    image: node:20.12.1
+    container_name: node-patched
+    working_dir: /app
+    volumes:
+      - ./patched:/app:delegated
+    command: ["bash", "-lc", "npm install --no-audit --no-fund 2>/dev/null || true; node server-fixed.js"]
+    ports:
+      - "3001:3000"
+    networks:
+      - labnet
+    restart: "no"
+
+  attacker:
+    build:
+      context: ./attacker
+      dockerfile: Dockerfile
+    container_name: attacker
+    working_dir: /app
+    volumes:
+      - ./attacker:/app:delegated
+    command: ["bash", "-lc", "sleep infinity"]
+    networks:
+      - labnet
+    tty: true
+    stdin_open: true
+
+networks:
+  labnet:
+    driver: bridge

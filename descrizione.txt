@@ -1,0 +1,13 @@
+CVE-2024-27983 è una Denial-of-Service sull’HTTP/2 server di Node.js: una condizione di race legata al trattamento dei frame CONTINUATION (e al destructor di Http2Session) che — inviando pochi pacchetti/frame appositamente costruiti e chiudendo la connessione — può lasciare dati in memoria e portare il server a crash/indisponibilità. È stata divulgata ad Aprile 2024 e riguarda serie di release Node (18.x, 20.x, 21.x) prima delle versioni patch.
+
+
+Perché è buona per il progetto:
+
+non è triviale (coinvolve HTTP/2, race condition e gestione dei frame);
+
+permette un laboratorio riproducibile (PoC pubblici esistono e l’advisory ufficiale indica le versioni vulnerabili e le release di correzione);
+
+ti permette sia di fare work a livello runtime/core (riprodurre e discutere patch nel codice di Node) sia di proporre mitigazioni applicative (disabilitare/limitare HTTP/2, rate limiting, limiti su header/frame, ecc.)
+
+
+https://github.com/lirantal/CVE-2024-27983-nodejs-http2/tree/main
