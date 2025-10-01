@@ -1,11 +1,22 @@
-# base: immagine Node (contiene node/npm)
-FROM node:20.11.1
+# attacker/Dockerfile - immagine basata su golang:1.23 con git, python3 e node/npm
+FROM golang:1.23
 
-# aggiorna apt e installa git, go, python3 e pip; rimuove cache apt per immagine più leggera
+# installo git, python3, pip, node e npm; poi pulisco cache apt
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     git \
-    golang-go \
     python3 \
     python3-pip \
+    nodejs \
+    npm \
  && rm -rf /var/lib/apt/lists/*
+
+# crea la cartella di lavoro
+WORKDIR /app
+
+# copio lo script attacker (utile anche se monti il volume)
+COPY attacker.sh /app/attacker.sh
+RUN chmod +x /app/attacker.sh
+
+# default: rimani in sleep per consentire accesso interattivo
+CMD ["bash", "-lc", "sleep infinity"]

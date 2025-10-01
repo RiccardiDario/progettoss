@@ -1,9 +1,9 @@
 {
   "name": "lab-http2-server-patched",
   "version": "0.1.0",
-  "main": "server-fixed.js",
+  "main": "server-patched.js",
   "scripts": {
-    "start": "node server-fixed.js"
+    "start": "node server-patched.js"
   },
   "engines": {
     "node": ">=18"

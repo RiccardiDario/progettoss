@@ -20,9 +20,22 @@ services:
     working_dir: /app
     volumes:
       - ./patched:/app:delegated
+    command: ["bash", "-lc", "npm install --no-audit --no-fund 2>/dev/null || true; node server-patched.js"]
+    ports:
+      - "3001:3001"
+    networks:
+      - labnet
+    restart: "no"
+
+  server-fixed:
+    image: node:20.11.1
+    container_name: server-fixed
+    working_dir: /app
+    volumes:
+      - ./fixed:/app:delegated
     command: ["bash", "-lc", "npm install --no-audit --no-fund 2>/dev/null || true; node server-fixed.js"]
     ports:
-      - "3001:3000"
+      - "3002:3002"
     networks:
       - labnet
     restart: "no"
