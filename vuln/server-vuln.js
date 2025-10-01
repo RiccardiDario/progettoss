@@ -1,41 +1,62 @@
-// Server HTTP/2 minimale
+// server-vuln.js
+// Server vulnerabile HTTP/2 + server HTTP/1.1 separato nello stesso processo.
+// HTTP/2: porta configurabile (default 3000) — LOGICA INALTERATA.
+// HTTP/1: ascolta su porta fissa 3004 (per evitare conflitti con 3000..3003).
 
- // importa il modulo http2 di Node
-const http2 = require('http2');
+const http2 = require('http2');   // HTTP/2 (h2/h2c)
+const http = require('http');     // HTTP/1
 
- // prendi la porta da env o usa 3000
-const PORT = process.env.PORT || 3000;
+// porta principale per HTTP/2 (configurabile)
+const PORT = Number(process.env.PORT || 3000);
 
- // log avvio server
+// porta fissa per HTTP/1 (usa 3004 per non collidere con 3000..3003)
+const PORT_HTTP1 = Number(process.env.PORT_HTTP1 || 3004);
+
+// ---------- HTTP/2 server (LOGICA VULNERABILE INALTERATA) ----------
 console.log('Starting VULNERABLE HTTP/2 server on port', PORT);
 
- // crea il server HTTP/2 (solo h2, no HTTP/1.1)
-const server = http2.createServer({ allowHTTP1: false }, (req, res) => {
+// crea il server HTTP/2 (mantieni allowHTTP1 come preferisci)
+const server = http2.createServer({ allowHTTP1: true }, (req, res) => {
   // log breve della richiesta ricevuta
-  console.log(`[${new Date().toISOString()}] Request`, { method: req.method, url: req.url, headers: req.headers });
-  // imposta header di risposta Content-Type
+  console.log(`[${new Date().toISOString()}] H2 Request`, { method: req.method, url: req.url, headers: req.headers });
+  // header di risposta
   res.setHeader('content-type', 'text/plain');
-  // scrive il body e chiude la risposta
+  // rispondi e chiudi
   res.end('ok\n');
 });
 
- // quando si crea una nuova sessione (connessione HTTP/2)
+// session handlers (non toccare)
 server.on('session', (session) => {
-  // logga errori specifici di sessione
-  session.on('error', (err) => {console.error('Session error:', err && err.message);});
-  // logga quando la sessione viene chiusa
-  session.on('close', () => { console.log('Session closed');});
+  session.on('error', (err) => { console.error('H2 Session error:', err && err.message); });
+  session.on('close', () => { console.log('H2 Session closed'); });
 });
 
- // log errori a livello di server
-server.on('error', (err) => {console.error('Server error:', err && err.message);});
+server.on('error', (err) => { console.error('H2 Server error:', err && err.message); });
 
- // metti il server in ascolto sulla porta configurata
-server.listen(PORT, () => {console.log(`VULNERABLE HTTP/2 server listening on port ${PORT}`);});
+// avvia H2 su porta 3000 (o quella in env)
+server.listen(PORT, () => { console.log(`VULNERABLE HTTP/2 server listening on port ${PORT}`); });
 
- // cattura SIGINT (Ctrl+C / stop) per shutdown pulito
+// ---------- HTTP/1 server (aggiunto) ----------
+console.log('Starting companion HTTP/1 server on port', PORT_HTTP1);
+
+const server1 = http.createServer((req, res) => {
+  // log minimale per H1
+  console.log(`[${new Date().toISOString()}] H1 Request`, { method: req.method, url: req.url, headers: req.headers });
+  // rispondi OK
+  res.writeHead(200, { 'content-type': 'text/plain' });
+  res.end('ok\n');
+});
+
+server1.on('error', (err) => { console.error('H1 Server error:', err && err.message); });
+
+server1.listen(PORT_HTTP1, () => {
+  console.log(`Minimal HTTP/1 server listening on port ${PORT_HTTP1}`);
+});
+
+// ---------- graceful shutdown ----------
 process.on('SIGINT', () => {
-  console.log('SIGINT: shutting down');
-  // chiude il server e poi termina il processo
-  server.close(() => process.exit(0));
+  console.log('SIGINT: shutting down servers');
+  try { server.close(); } catch (e) {}
+  try { server1.close(); } catch (e) {}
+  process.exit(0);
 });

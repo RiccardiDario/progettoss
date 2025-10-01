@@ -1,0 +1,51 @@
+static_resources:
+  listeners:
+    - name: listener_h2
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 3003
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                codec_type: AUTO           # Accetta HTTP/1.1 e HTTP/2 (h2c) in ingresso
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: backend
+                      domains: ["*"]
+                      routes:
+                        - match: { prefix: "/" }
+                          route:
+                            cluster: node_vuln_cluster
+                            timeout: 0s
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    - name: node_vuln_cluster
+      connect_timeout: 1s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: node_vuln_cluster
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: node-vuln
+                      port_value: 3004
+     
+
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
