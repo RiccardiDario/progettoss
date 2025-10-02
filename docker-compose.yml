@@ -56,8 +56,6 @@ services:
       dockerfile: Dockerfile
     container_name: attacker
     working_dir: /app
-    volumes:
-      - ./attacker:/app:delegated
     command: ["bash", "-lc", "sleep infinity"]
     networks:
       - labnet

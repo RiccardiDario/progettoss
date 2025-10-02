@@ -1,9 +1,9 @@
-# attacker/Dockerfile - immagine basata su golang:1.23 con git, python3 e node/npm
 FROM golang:1.23
 
-# installo git, python3, pip, node e npm; poi pulisco cache apt
+# installo git, python3, pip, node e npm e certificati; poi pulisco cache apt
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
+    ca-certificates \
     git \
     python3 \
     python3-pip \
@@ -11,12 +11,24 @@ RUN apt-get update \
     npm \
  && rm -rf /var/lib/apt/lists/*
 
-# crea la cartella di lavoro
+# creo la cartella di lavoro prima di eseguire il clone (evita sovrascritture da volumi in run)
 WORKDIR /app
 
-# copio lo script attacker (utile anche se monti il volume)
-COPY attacker.sh /app/attacker.sh
-RUN chmod +x /app/attacker.sh
+# Clono il PoC (shallow clone), scarico dipendenze e lascio i file nell'immagine
+RUN set -e; \
+    POC_DIR="/app/poc"; \
+    # rimuovo la condizione per vedere sempre l'errore se il clone fallisce
+    rm -rf "$POC_DIR"; \
+    git clone --depth 1 https://github.com/lirantal/CVE-2024-27983-nodejs-http2.git "$POC_DIR"; \
+    cd "$POC_DIR"; \
+    git rev-parse --abbrev-ref HEAD 2>/dev/null || true; \
+    git log -n 1 --pretty=format:"%h %s" 2>/dev/null || true; \
+    if [ -f "go.mod" ]; then \
+      go mod download; \
+    fi; \
+    if [ -f "requirements.txt" ]; then \
+      pip3 install --no-cache-dir --user -r requirements.txt || true; \
+    fi
 
 # default: rimani in sleep per consentire accesso interattivo
 CMD ["bash", "-lc", "sleep infinity"]
