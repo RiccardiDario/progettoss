@@ -11,13 +11,10 @@ RUN apt-get update \
     npm \
  && rm -rf /var/lib/apt/lists/*
 
-# creo la cartella di lavoro prima di eseguire il clone (evita sovrascritture da volumi in run)
-WORKDIR /app
 
-# Clono il PoC (shallow clone), scarico dipendenze e lascio i file nell'immagine
+WORKDIR /app
 RUN set -e; \
     POC_DIR="/app/poc"; \
-    # rimuovo la condizione per vedere sempre l'errore se il clone fallisce
     rm -rf "$POC_DIR"; \
     git clone --depth 1 https://github.com/lirantal/CVE-2024-27983-nodejs-http2.git "$POC_DIR"; \
     cd "$POC_DIR"; \
@@ -30,5 +27,4 @@ RUN set -e; \
       pip3 install --no-cache-dir --user -r requirements.txt || true; \
     fi
 
-# default: rimani in sleep per consentire accesso interattivo
 CMD ["bash", "-lc", "sleep infinity"]

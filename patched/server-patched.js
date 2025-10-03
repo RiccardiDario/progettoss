@@ -1,16 +1,7 @@
-// server-patched.js
-// Minimal HTTP/2 server (cleartext/h2c) su porta default 3001
-
- // importa il modulo http2 di Node
 const http2 = require('http2');
-
- // prendi la porta da env o usa 3001
 const PORT = process.env.PORT || 3001;
 
- // log avvio server
 console.log('Starting PATCHED HTTP/2 server (no TLS) on port', PORT);
-
- // crea il server HTTP/2 (solo h2)
 const server = http2.createServer({ allowHTTP1: false }, (req, res) => {
   // log breve della richiesta ricevuta
   console.log(`[${new Date().toISOString()}] Request`, { method: req.method, url: req.url, headers: req.headers });
@@ -37,12 +28,9 @@ server.on('error', (err) => {
   console.error('Server error:', err && err.message);
 });
 
- // metti il server in ascolto sulla porta configurata
+ 
 server.listen(PORT, () => {
-  // conferma che il server è avviato
   console.log(`PATCHED HTTP/2 server listening on port ${PORT}`);
-  // suggerimento su come targettare il servizio dalla rete docker
-  console.log('Tip: from attacker container target node-patched:3001');
 });
 
  // cattura SIGINT (Ctrl+C / stop) per shutdown pulito
