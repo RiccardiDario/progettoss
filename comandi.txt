@@ -1,6 +1,6 @@
 nghttp -v http://node-vuln:3000/
 nghttp -v http://node-patched:3001/
-nghttp -v http://node-fixed:3002/
+nghttp -v http://server-fixed:3002/
 nghttp -v http://envoy:3003/
 
 
