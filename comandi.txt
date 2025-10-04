@@ -1,0 +1,16 @@
+nghttp -v http://node-vuln:3000/
+nghttp -v http://node-patched:3001/
+nghttp -v http://node-fixed:3002/
+nghttp -v http://envoy:3003/
+
+
+curl --http2-prior-knowledge -v http://server-fixed:3002/
+curl --http2-prior-knowledge -v http://envoy:3003/
+
+go run ./exploit2.go -address node-vuln:3000
+
+go run ./exploit2.go -address node-patched:3001
+
+go run ./exploit2.go -address server-fixed:3002
+
+go run ./exploit2.go -address envoy:3003

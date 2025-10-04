@@ -1,4 +1,3 @@
-
 services:
   node-vuln:
     image: node:20.11.1
@@ -34,7 +33,7 @@ services:
       - ./fixed:/app:delegated
     command: ["bash", "-lc", "npm install --no-audit --no-fund 2>/dev/null || true; node server-fixed.js"]
     ports:
-      - "3002:3002"    # esponi su host 3003 (interno container 3002) così non clasha
+      - "3002:3002" 
     networks:
       - labnet
     restart: "no"
@@ -45,7 +44,7 @@ services:
     volumes:
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
     ports:
-      - "3003:3003"      # envoy espone porta 3002 all'host (frontend H2/H2c)
+      - "3003:3003"
     networks:
       - labnet
     restart: "no"
